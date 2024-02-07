@@ -1,8 +1,31 @@
---TODO: Update the date comparisons in the WHERE clause to have CURRENT_DATE rather than 05/01/2005
+DROP FUNCTION IF EXISTS generate_summary_report() CASCADE;
+DROP TRIGGER IF EXISTS summary_trigger ON detailed_report; 
+DROP TABLE IF EXISTS summary_report; 
+DROP TABLE IF EXISTS detailed_report;
+
+CREATE TABLE summary_report (
+	last_day_of_month DATE,
+	store_id SMALLINT,
+	category_name VARCHAR(25), 
+	potential_sales TEXT,
+	total_rentals BIGINT,
+	PRIMARY KEY (last_day_of_month, store_id, category_name)
+);
+
+
+CREATE TABLE detailed_report (
+	rental_id INTEGER PRIMARY KEY,
+	rental_date DATE,
+	rental_rate NUMERIC(4,2),
+	rental_duration SMALLINT,
+	store_id SMALLINT,
+	category_name VARCHAR(25)
+);
+
 
 CREATE OR REPLACE FUNCTION generate_summary_report() 
-	 RETURNS TRIGGER
-	 LANGUAGE PLPGSQL
+	RETURNS TRIGGER
+	LANGUAGE PLPGSQL
 AS $$
 BEGIN
 	INSERT INTO summary_report (
@@ -18,16 +41,18 @@ BEGIN
 		detailed_report.category_name,
 		CONCAT('$', SUM(detailed_report.rental_rate * detailed_report.rental_duration)) AS potential_sales,
 		COUNT(detailed_report.rental_id) AS total_rentals
-	WHERE date_part('month', rental.rental_date) = date_part('month', '05/01/2005'::DATE)
-		AND date_part('year', rental.rental_date) = date_part('year',  '05/01/2005'::DATE)
-	GROUP BY last_day_of_month, staff.store_id, category.name;
-RETURN NEW;
+	FROM
+		detailed_report
+	WHERE date_part('month', detailed_report.rental_date) = date_part('month', '08/01/2005'::DATE)
+		AND date_part('year', detailed_report.rental_date) = date_part('year',  '08/01/2005'::DATE)
+	GROUP BY last_day_of_month, detailed_report.store_id, detailed_report.category_name;
+	RETURN NEW; 
 END; 
 $$;
 
 
 CREATE OR REPLACE FUNCTION generate_detailed_report() 
-	RETURNS TRIGGER
+	RETURNS void
 	LANGUAGE PLPGSQL
 AS $$
 BEGIN
@@ -58,8 +83,17 @@ BEGIN
 		ON inventory.film_id = film.film_id
 	LEFT JOIN staff
 		ON rental.staff_id = staff.staff_id
-	WHERE date_part('month', rental.rental_date) = date_part('month', '05/01/2005'::DATE)
-		AND date_part('year', rental.rental_date) = date_part('year', '05/01/2005'::DATE); 
-RETURN NEW; 
+	WHERE date_part('month', rental.rental_date) = date_part('month', '08/01/2005'::DATE)
+		AND date_part('year', rental.rental_date) = date_part('year', '08/01/2005'::DATE);
 END; 
 $$;
+
+
+CREATE TRIGGER summary_trigger
+	AFTER INSERT
+	ON detailed_report
+	FOR EACH STATEMENT
+	EXECUTE PROCEDURE generate_summary_report(); 
+	
+
+select generate_detailed_report(); 
