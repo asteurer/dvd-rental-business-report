@@ -1,3 +1,4 @@
+--Summary Table
 SELECT 
 	staff.store_id, 
 	category.name AS category_name,
