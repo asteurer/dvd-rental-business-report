@@ -1,9 +1,8 @@
 SELECT 
 	staff.store_id, 
 	category.name AS category_name,
-	SUM(film.rental_rate * film.rental_duration) AS potential_sales,
+	'$' || SUM(film.rental_rate * film.rental_duration) AS potential_sales,
 	COUNT(rental.rental_id) AS total_rentals
-	
 FROM
 	rental
 LEFT JOIN inventory 
