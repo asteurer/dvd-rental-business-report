@@ -1,6 +1,3 @@
-DROP TABLE IF EXISTS detailed_report;
-DROP TABLE IF EXISTS summary_report; 
-
 CREATE TABLE detailed_report (
 	rental_id INTEGER PRIMARY KEY,
 	rental_date DATE,
@@ -21,14 +18,6 @@ CREATE TABLE summary_report (
 	PRIMARY KEY (month_number, year_number, store_id, category_name)
 );
 
-
-CREATE OR REPLACE TRIGGER summary_trigger
-	AFTER INSERT
-	ON detailed_report
-	FOR EACH STATEMENT
-	EXECUTE PROCEDURE generate_summary_report(); 
-			
-		
 CREATE OR REPLACE FUNCTION generate_summary_report() 
 	RETURNS TRIGGER
 	LANGUAGE plpgsql
@@ -99,6 +88,36 @@ CREATE OR REPLACE PROCEDURE get_sales(date_input TEXT)
 	LANGUAGE plpgsql
 	AS $$
 	BEGIN
+		DROP TABLE IF EXISTS detailed_report;
+		DROP TABLE IF EXISTS summary_report; 
+
+		CREATE TABLE detailed_report (
+			rental_id INTEGER PRIMARY KEY,
+			rental_date DATE,
+			rental_rate NUMERIC(4,2),
+			rental_duration SMALLINT,
+			store_id SMALLINT,
+			category_name VARCHAR(25)
+		);
+
+
+		CREATE TABLE summary_report (
+			month_number SMALLINT,
+			year_number SMALLINT,
+			store_id SMALLINT,
+			category_name VARCHAR(25), 
+			potential_sales TEXT,
+			total_rentals BIGINT,
+			PRIMARY KEY (month_number, year_number, store_id, category_name)
+		);
+
+
+		CREATE OR REPLACE TRIGGER summary_trigger
+			AFTER INSERT
+			ON detailed_report
+			FOR EACH STATEMENT
+			EXECUTE PROCEDURE generate_summary_report(); 
+	
 		PERFORM generate_detailed_report(date_input::DATE); 
 	RETURN; 
 	END; 
