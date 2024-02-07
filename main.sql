@@ -1,17 +1,5 @@
-DROP FUNCTION IF EXISTS generate_summary_report() CASCADE;
-DROP TRIGGER IF EXISTS summary_trigger ON detailed_report; 
-DROP TABLE IF EXISTS summary_report; 
 DROP TABLE IF EXISTS detailed_report;
-
-CREATE TABLE summary_report (
-	last_day_of_month DATE,
-	store_id SMALLINT,
-	category_name VARCHAR(25), 
-	potential_sales TEXT,
-	total_rentals BIGINT,
-	PRIMARY KEY (last_day_of_month, store_id, category_name)
-);
-
+DROP TABLE IF EXISTS summary_report; 
 
 CREATE TABLE detailed_report (
 	rental_id INTEGER PRIMARY KEY,
@@ -23,37 +11,55 @@ CREATE TABLE detailed_report (
 );
 
 
+CREATE TABLE summary_report (
+	month_number SMALLINT,
+	year_number SMALLINT,
+	store_id SMALLINT,
+	category_name VARCHAR(25), 
+	potential_sales TEXT,
+	total_rentals BIGINT,
+	PRIMARY KEY (month_number, year_number, store_id, category_name)
+);
+
+
+CREATE OR REPLACE TRIGGER summary_trigger
+	AFTER INSERT
+	ON detailed_report
+	FOR EACH STATEMENT
+	EXECUTE PROCEDURE generate_summary_report(); 
+			
+		
 CREATE OR REPLACE FUNCTION generate_summary_report() 
 	RETURNS TRIGGER
-	LANGUAGE PLPGSQL
+	LANGUAGE plpgsql
 AS $$
 BEGIN
 	INSERT INTO summary_report (
-		last_day_of_month,
+		month_number,
+		year_number,
 		store_id,
 		category_name,
 		potential_sales,
 		total_rentals
 	)
 	SELECT
-		(DATE_TRUNC('MONTH', detailed_report.rental_date) + INTERVAL '1 MONTH' - INTERVAL '1 day')::DATE as last_day_of_month,
+		date_part('month', detailed_report.rental_date)::INT AS month_number,
+		date_part('year', detailed_report.rental_date)::INT as year_number,
 		detailed_report.store_id,
 		detailed_report.category_name,
-		CONCAT('$', SUM(detailed_report.rental_rate * detailed_report.rental_duration)) AS potential_sales,
+		SUM(detailed_report.rental_rate * detailed_report.rental_duration)::NUMERIC::MONEY AS potential_sales,
 		COUNT(detailed_report.rental_id) AS total_rentals
 	FROM
 		detailed_report
-	WHERE date_part('month', detailed_report.rental_date) = date_part('month', '08/01/2005'::DATE)
-		AND date_part('year', detailed_report.rental_date) = date_part('year',  '08/01/2005'::DATE)
-	GROUP BY last_day_of_month, detailed_report.store_id, detailed_report.category_name;
-	RETURN NEW; 
+	GROUP BY month_number, year_number, detailed_report.store_id, detailed_report.category_name;
+	RETURN NULL; 
 END; 
 $$;
 
 
-CREATE OR REPLACE FUNCTION generate_detailed_report() 
+CREATE OR REPLACE FUNCTION generate_detailed_report(input_date DATE) 
 	RETURNS void
-	LANGUAGE PLPGSQL
+	LANGUAGE plpgsql
 AS $$
 BEGIN
 	INSERT INTO detailed_report(
@@ -83,17 +89,17 @@ BEGIN
 		ON inventory.film_id = film.film_id
 	LEFT JOIN staff
 		ON rental.staff_id = staff.staff_id
-	WHERE date_part('month', rental.rental_date) = date_part('month', '08/01/2005'::DATE)
-		AND date_part('year', rental.rental_date) = date_part('year', '08/01/2005'::DATE);
+	WHERE date_part('month', rental.rental_date) = date_part('month', input_date)
+		AND date_part('year', rental.rental_date) = date_part('year', input_date);
 END; 
 $$;
-
-
-CREATE TRIGGER summary_trigger
-	AFTER INSERT
-	ON detailed_report
-	FOR EACH STATEMENT
-	EXECUTE PROCEDURE generate_summary_report(); 
 	
 
-select generate_detailed_report(); 
+CREATE OR REPLACE PROCEDURE get_sales(date_input TEXT)
+	LANGUAGE plpgsql
+	AS $$
+	BEGIN
+		PERFORM generate_detailed_report(date_input::DATE); 
+	RETURN; 
+	END; 
+	$$;
