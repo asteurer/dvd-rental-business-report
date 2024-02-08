@@ -1,7 +1,7 @@
 CREATE TABLE detailed_report (
 	rental_id INTEGER PRIMARY KEY,
 	rental_date DATE,
-	rental_rate NUMERIC(4,2),
+	rental_rate MONEY,
 	rental_duration SMALLINT,
 	store_id SMALLINT,
 	category_name VARCHAR(25)
@@ -17,6 +17,7 @@ CREATE TABLE summary_report (
 	total_rentals BIGINT,
 	PRIMARY KEY (month_number, year_number, store_id, category_name)
 );
+		
 
 CREATE OR REPLACE FUNCTION generate_summary_report() 
 	RETURNS TRIGGER
@@ -36,7 +37,7 @@ BEGIN
 		date_part('year', detailed_report.rental_date)::INT as year_number,
 		detailed_report.store_id,
 		detailed_report.category_name,
-		SUM(detailed_report.rental_rate * detailed_report.rental_duration)::NUMERIC::MONEY AS potential_sales,
+		SUM(detailed_report.rental_rate * detailed_report.rental_duration) AS potential_sales,
 		COUNT(detailed_report.rental_id) AS total_rentals
 	FROM
 		detailed_report
@@ -62,7 +63,7 @@ BEGIN
 	SELECT 
 		rental.rental_id, 
 		rental.rental_date, 
-		film.rental_rate,
+		film.rental_rate::MONEY,
 		film.rental_duration,
 		staff.store_id, 
 		category.name AS category_name
@@ -90,11 +91,11 @@ CREATE OR REPLACE PROCEDURE get_sales(date_input TEXT)
 	BEGIN
 		DROP TABLE IF EXISTS detailed_report;
 		DROP TABLE IF EXISTS summary_report; 
-
+		
 		CREATE TABLE detailed_report (
 			rental_id INTEGER PRIMARY KEY,
 			rental_date DATE,
-			rental_rate NUMERIC(4,2),
+			rental_rate MONEY,
 			rental_duration SMALLINT,
 			store_id SMALLINT,
 			category_name VARCHAR(25)
@@ -106,7 +107,7 @@ CREATE OR REPLACE PROCEDURE get_sales(date_input TEXT)
 			year_number SMALLINT,
 			store_id SMALLINT,
 			category_name VARCHAR(25), 
-			potential_sales TEXT,
+			potential_sales MONEY,
 			total_rentals BIGINT,
 			PRIMARY KEY (month_number, year_number, store_id, category_name)
 		);

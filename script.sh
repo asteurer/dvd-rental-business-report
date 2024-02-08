@@ -4,7 +4,7 @@
 DB_NAME="project"
 DB_USER="postgres"
 DB_HOST="localhost"
-DB_PORT="5432"  # Default is usually 5432
+DB_PORT="5432"
 
 # Prompt user for year and month
 echo "Please enter the year (YYYY):"
@@ -13,12 +13,12 @@ echo "Please enter the month (MM):"
 read MONTH
 
 # Validate input (basic validation, can be expanded)
-if ! [[ $YEAR =~ ^[0-9]{4}$ ]]; then
+if ! [[ $YEAR =~ ^[0-9]{4}$ ]]; then # Checks that the year is four digits
     echo "Invalid year. Please enter a 4-digit year."
     exit 1
 fi
 
-if ! [[ $MONTH =~ ^[0-9]{2}$ ]] || [ $MONTH -lt 1 ] || [ $MONTH -gt 12 ]; then
+if ! [[ $MONTH =~ ^[0-9]{2}$ ]] || [ $MONTH -lt 1 ] || [ $MONTH -gt 12 ]; then # Checks that the month is 2 digits and is not greater than 12
     echo "Invalid month. Please enter a month in MM format (01-12)."
     exit 1
 fi
