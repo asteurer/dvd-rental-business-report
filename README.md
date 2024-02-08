@@ -53,6 +53,7 @@ The procedure will set up the environment and populate both **detailed_report** 
 ## Notes
 
 The **database.backup** file is a functional backup of a PostgreSQL database, and can be used to test the code in **main.sql**. 
+
 The **script.sh** file was written to run the procedure **get_sales** and prompts the user to input a **year** and **month** value to insert values into the **detailed_report** and **summary_report** tables. 
 
 ## Authors
