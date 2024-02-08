@@ -30,10 +30,10 @@ This table uses a composite primary key consisting of month_number, year_number,
 ## Functions
 
 1. **generate_summary_report**
-This function is triggered after each insert operation on the detailed_report table. It aggregates data from the detailed_report table and inserts it into the summary_report table, providing a monthly and yearly summary of rentals by store and category.
+This function is triggered after each insert operation on the detailed_report table. It aggregates data from the detailed_report table and inserts it into the **summary_report** table, providing a monthly and yearly summary of rentals by store and category.
 
 2. **generate_detailed_report**
-This function takes a date as input and inserts data into the detailed_report table based on the given month and year. It pulls data from various tables like rental, inventory, film_category, category, film, and staff.
+This function takes a date as input and inserts data into the **detailed_report** table based on the given month and year. It pulls data from various tables like rental, inventory, film_category, category, film, and staff.
 
 ## Procedure
 
@@ -53,6 +53,7 @@ The procedure will set up the environment and populate both **detailed_report** 
 ## Notes
 
 The **database.backup** file is a functional backup of a PostgreSQL database, and can be used to test the code in **main.sql**. 
+The **script.sh** file was written to run the procedure **get_sales** and prompts the user to input a **year** and **month** value to insert values into the **detailed_report** and **summary_report** tables. 
 
 ## Authors
 
